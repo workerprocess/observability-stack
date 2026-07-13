@@ -5,13 +5,13 @@ services:
       context: ./otel
       dockerfile: Dockerfile
     container_name: core-otel-collector
-    command: ["--config=/etc/otelcol/config.yaml"]
+    command: [ "--config=/etc/otelcol/config.yaml" ]
     volumes:
       - ./otel/collector.yaml:/etc/otelcol/config.yaml:ro
     ports:
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
-      - "8889:8889"   # Prometheus scrape endpoint
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "8889:8889" # Prometheus scrape endpoint
     depends_on:
       - tempo
       - loki
@@ -42,7 +42,7 @@ services:
       context: ./loki
       dockerfile: Dockerfile
     container_name: core-loki
-    command: ["-config.file=/etc/loki/loki.yaml"]
+    command: [ "-config.file=/etc/loki/loki.yaml" ]
     volumes:
       - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
       - loki-data:/loki
@@ -57,7 +57,7 @@ services:
       dockerfile: Dockerfile
     container_name: core-tempo
     user: "root"
-    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    command: [ "-config.file=/etc/tempo/tempo.yaml" ]
     volumes:
       - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
       - tempo-data:/tmp/tempo
@@ -75,6 +75,7 @@ services:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: http://localhost:3300
       GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
       GF_AUTH_GENERIC_OAUTH_NAME: "Keycloak"
       GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: "true"
@@ -84,13 +85,14 @@ services:
       GF_AUTH_GENERIC_OAUTH_AUTH_URL: ${KEYCLOAK_OAUTH_BASE_URL}/protocol/openid-connect/auth
       GF_AUTH_GENERIC_OAUTH_TOKEN_URL: ${KEYCLOAK_OAUTH_BASE_URL}/protocol/openid-connect/token
       GF_AUTH_GENERIC_OAUTH_API_URL: ${KEYCLOAK_OAUTH_BASE_URL}/protocol/openid-connect/userinfo
+      GF_AUTH_GENERIC_OAUTH_SIGNOUT_REDIRECT_URL: "${KEYCLOAK_OAUTH_BASE_URL}/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3300%2Flogin&client_id=grafana"
       GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(resource_access.grafana.roles[*], 'admin') && 'Admin' || contains(resource_access.grafana.roles[*], 'editor') && 'Editor' || 'Viewer'"
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
-      - "3000:3000"
+      - "3300:3000"
     depends_on:
       - prometheus
       - loki
